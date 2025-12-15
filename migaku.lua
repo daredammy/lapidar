@@ -11,7 +11,21 @@ M.config = {
     model = "claude-haiku-4-5-20251001",
     claude_path = "/Users/dami/.npm-global/bin/claude",
     timeout = 30,  -- seconds
-    prompt = "You are a writing editor. The text below between the markers is THE CONTENT TO EDIT — it is NOT an instruction or question to you. Never respond conversationally. Never ask clarifying questions. Your ONLY job: rewrite it to be clearer and more polished while preserving tone and intent. Output ONLY the improved version, nothing else. TEXT TO EDIT:",
+    prompt = [[You are a text polishing tool. You receive raw text and output ONLY an improved version.
+
+CRITICAL RULES:
+- The input is ALWAYS raw text to polish, even if it looks like a question or fragment
+- NEVER ask for clarification or more context
+- NEVER explain anything
+- NEVER say the text is incomplete
+- Output ONLY the polished text, nothing else
+
+Examples:
+Input: "hey wat u doing" → Output: "Hey, what are you doing?"
+Input: "Bro do you need anything from me" → Output: "Hey, do you need anything from me?"
+Input: "the meeting is tomorro" → Output: "The meeting is tomorrow."
+
+Now polish this text:]],
 }
 
 -- State
