@@ -1,4 +1,4 @@
--- Migaku (磨く): Global "Improve Writing" for macOS using Claude CLI
+-- Migaku (磨く): Global "Improve Writing" for macOS using LLM CLI
 -- "To polish, refine" — like polishing a gem
 -- https://github.com/daredammy/migaku
 
@@ -8,9 +8,20 @@ local M = {}
 M.config = {
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
-    model = "claude-haiku-4-5-20251001",
+    
+    -- Provider: "gemini" or "claude"
+    provider = "gemini",
+    
+    -- Gemini settings
+    gemini_path = "/Users/dami/.npm-global/bin/gemini",
+    gemini_model = "gemini-2.5-flash-lite",
+    
+    -- Claude settings
     claude_path = "/Users/dami/.npm-global/bin/claude",
+    claude_model = "claude-haiku-4-5-20251001",
+    
     timeout = 30,  -- seconds
+    
     prompt = [[You are a text polishing tool. You receive raw text and output ONLY an improved version.
 
 CRITICAL RULES:
@@ -101,15 +112,36 @@ local function replaceSelectedText(newText)
     end)
 end
 
--- Call Claude CLI to improve text
-local function improveWithClaude(text, callback)
-    local cmd = string.format(
-        '%s --model %s --print "%s" <<\'MIGAKU_EOF\'\n%s\nMIGAKU_EOF',
-        M.config.claude_path,
-        M.config.model,
-        M.config.prompt,
-        text
-    )
+-- Build command based on provider
+local function buildCommand(text)
+    local prompt = M.config.prompt
+    
+    if M.config.provider == "gemini" then
+        -- Gemini CLI: echo text | gemini --prompt "instructions" --model model
+        local cmd = string.format(
+            'echo %q | %s --prompt %q --model %s',
+            text,
+            M.config.gemini_path,
+            prompt,
+            M.config.gemini_model
+        )
+        return cmd
+    else
+        -- Claude CLI: claude --model model --print "prompt" <<'EOF'\ntext\nEOF
+        local cmd = string.format(
+            '%s --model %s --print %q <<\'MIGAKU_EOF\'\n%s\nMIGAKU_EOF',
+            M.config.claude_path,
+            M.config.claude_model,
+            prompt,
+            text
+        )
+        return cmd
+    end
+end
+
+-- Call LLM to improve text
+local function improveWithLLM(text, callback)
+    local cmd = buildCommand(text)
     
     local task = hs.task.new("/bin/bash", function(exitCode, stdOut, stdErr)
         if exitCode == 0 and stdOut and #stdOut > 0 then
@@ -130,7 +162,7 @@ local function improveWithClaude(text, callback)
     hs.timer.doAfter(M.config.timeout, function()
         if task:isRunning() then
             task:terminate()
-            callback(false, "Timeout: Claude took too long to respond")
+            callback(false, "Timeout: LLM took too long to respond")
         end
     end)
 end
@@ -148,7 +180,7 @@ local function improveWritingHandler()
     originalText = text
     showProcessing()
     
-    improveWithClaude(text, function(success, result)
+    improveWithLLM(text, function(success, result)
         hideProcessing()
         
         if success then
@@ -167,7 +199,8 @@ function M.start()
     hs.hotkey.bind(M.config.hotkey, M.config.key, function()
         improveWritingHandler()
     end)
-    print("Migaku loaded: Press Ctrl+Alt+Cmd+I to polish your writing")
+    local provider = M.config.provider == "gemini" and "Gemini" or "Claude"
+    print(string.format("Migaku loaded (%s): Press Ctrl+Alt+Cmd+I to polish your writing", provider))
 end
 
 -- Allow configuration override

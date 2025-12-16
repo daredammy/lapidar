@@ -2,12 +2,13 @@
 
 > *"To polish, refine"* — like polishing a gem
 
-A global macOS "Improve Writing" hotkey powered by Claude AI. Select text anywhere, press `⌃⌥⌘I`, get polished writing instantly.
+A global macOS "Improve Writing" hotkey powered by LLMs. Select text anywhere, press `⌃⌥⌘I`, get polished writing instantly.
 
 ## Features
 
 - **Global hotkey** — Works in any application (Notion, Slack, browser, anywhere)
-- **Fast** — Uses Claude Haiku 4.5 for quick responses (~2-3 seconds)
+- **Multi-provider** — Supports Gemini and Claude
+- **Fast** — Uses lightweight models for quick responses (~2-3 seconds)
 - **Visual feedback** — Menu bar indicator while processing
 - **Sound feedback** — Audio cues for success/failure
 - **Non-destructive** — Preserves your clipboard contents
@@ -16,7 +17,7 @@ A global macOS "Improve Writing" hotkey powered by Claude AI. Select text anywhe
 
 - macOS
 - [Hammerspoon](https://www.hammerspoon.org/)
-- [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli) (authenticated)
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)
 
 ## Installation
 
@@ -28,8 +29,15 @@ brew install --cask hammerspoon
 
 Launch Hammerspoon and grant Accessibility permissions when prompted.
 
-### 2. Install Claude CLI
+### 2. Install your preferred LLM CLI
 
+**Gemini (default):**
+```bash
+npm install -g @google/gemini-cli
+gemini  # Follow authentication prompts
+```
+
+**Claude:**
 ```bash
 npm install -g @anthropic-ai/claude-code
 claude  # Follow authentication prompts
@@ -66,23 +74,36 @@ Customize in your `init.lua`:
 ```lua
 local migaku = require("migaku.migaku")
 migaku.setup({
+    -- Provider: "gemini" or "claude"
+    provider = "gemini",
+    
+    -- Gemini settings
+    gemini_model = "gemini-2.5-flash-lite",
+    gemini_path = "/path/to/gemini",
+    
+    -- Claude settings  
+    claude_model = "claude-haiku-4-5-20251001",
+    claude_path = "/path/to/claude",
+    
     -- Change the hotkey
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
     
-    -- Use a different model
-    model = "claude-sonnet-4-5-20250929",
-    
-    -- Custom prompt
-    prompt = "Fix grammar and spelling only. Output ONLY the corrected text.",
-    
     -- Timeout in seconds
     timeout = 30,
-    
-    -- Path to Claude CLI (if not in default location)
-    claude_path = "/usr/local/bin/claude",
 })
 ```
+
+### Available Models
+
+**Gemini:**
+- `gemini-2.5-flash-lite` (default, fastest)
+- `gemini-2.5-flash`
+- `gemini-2.5-pro`
+
+**Claude:**
+- `claude-haiku-4-5-20251001` (default, fastest)
+- `claude-sonnet-4-5-20250929`
 
 ## Troubleshooting
 
@@ -91,17 +112,17 @@ migaku.setup({
 - Some applications may not support standard copy/paste
 
 **Hotkey not working**
-- Ensure Hammerspoon has Accessibility permissions (System Preferences → Security & Privacy → Accessibility)
+- Ensure Hammerspoon has Accessibility permissions (System Settings → Privacy & Security → Accessibility)
 - Check if another app is using the same hotkey
 
-**Claude errors**
-- Run `claude --version` to verify CLI is installed
-- Run `claude` to check authentication status
+**LLM errors**
+- Run `gemini --help` or `claude --version` to verify CLI is installed
+- Run `gemini` or `claude` to check authentication status
 
 ## How It Works
 
 1. Captures selected text via simulated `⌘C`
-2. Sends text to Claude Haiku via CLI
+2. Sends text to LLM via CLI
 3. Replaces selection with improved text via simulated `⌘V`
 4. Restores original clipboard contents
 
@@ -111,7 +132,7 @@ MIT
 
 ## Credits
 
-Built with [Hammerspoon](https://www.hammerspoon.org/) and [Claude](https://claude.ai).
+Built with [Hammerspoon](https://www.hammerspoon.org/), [Gemini CLI](https://github.com/google-gemini/gemini-cli), and [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli).
 
 ---
 
