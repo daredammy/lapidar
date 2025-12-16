@@ -51,7 +51,7 @@ Clone this repo:
 git clone https://github.com/daredammy/lapidar.git ~/.hammerspoon/lapidar
 ```
 
-Add to your `~/.hammerspoon/init.lua`:
+Add to your `~/.hammerspoon/init.lua` (see [init.lua.example](init.lua.example) for reference):
 
 ```lua
 local lapidar = require("lapidar.lapidar")
