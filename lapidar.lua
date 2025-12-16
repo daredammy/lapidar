@@ -1,6 +1,6 @@
--- Migaku (磨く): Global "Improve Writing" for macOS using LLM CLI
--- "To polish, refine" — like polishing a gem
--- https://github.com/daredammy/migaku
+-- Lapidar: Global "Improve Writing" for macOS using LLM CLI
+-- From "lapidary" — the art of cutting and polishing gems
+-- https://github.com/daredammy/lapidar
 
 local M = {}
 
@@ -8,20 +8,20 @@ local M = {}
 M.config = {
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
-    
+
     -- Provider: "gemini" or "claude"
     provider = "gemini",
-    
-    -- Gemini settings
-    gemini_path = "/Users/dami/.npm-global/bin/gemini",
+
+    -- Gemini settings (uses PATH by default)
+    gemini_path = "gemini",
     gemini_model = "gemini-2.5-flash-lite",
-    
-    -- Claude settings
-    claude_path = "/Users/dami/.npm-global/bin/claude",
+
+    -- Claude settings (uses PATH by default)
+    claude_path = "claude",
     claude_model = "claude-haiku-4-5-20251001",
-    
+
     timeout = 30,  -- seconds
-    
+
     prompt = [[You are a text polishing tool. You receive raw text and output ONLY an improved version.
 
 CRITICAL RULES:
@@ -48,7 +48,7 @@ local function showProcessing()
     if menubarItem then menubarItem:delete() end
     menubarItem = hs.menubar.new()
     menubarItem:setTitle("✨")
-    menubarItem:setTooltip("Migaku: Polishing your writing...")
+    menubarItem:setTooltip("Lapidar: Polishing your writing...")
 end
 
 -- Hide processing indicator
@@ -80,31 +80,31 @@ end
 -- Get selected text via clipboard
 local function getSelectedText()
     local originalClipboard = hs.pasteboard.getContents()
-    
+
     hs.eventtap.keyStroke({"cmd"}, "c")
     hs.timer.usleep(100000)  -- 100ms wait for clipboard
-    
+
     local selectedText = hs.pasteboard.getContents()
-    
+
     if originalClipboard then
         hs.pasteboard.setContents(originalClipboard)
     end
-    
+
     if selectedText == originalClipboard then
         return nil
     end
-    
+
     return selectedText
 end
 
 -- Replace selected text with new text
 local function replaceSelectedText(newText)
     local originalClipboard = hs.pasteboard.getContents()
-    
+
     hs.pasteboard.setContents(newText)
     hs.timer.usleep(50000)
     hs.eventtap.keyStroke({"cmd"}, "v")
-    
+
     hs.timer.doAfter(0.5, function()
         if originalClipboard then
             hs.pasteboard.setContents(originalClipboard)
@@ -115,7 +115,7 @@ end
 -- Build command based on provider
 local function buildCommand(text)
     local prompt = M.config.prompt
-    
+
     if M.config.provider == "gemini" then
         -- Gemini CLI: echo text | gemini --prompt "instructions" --model model
         local cmd = string.format(
@@ -129,7 +129,7 @@ local function buildCommand(text)
     else
         -- Claude CLI: claude --model model --print "prompt" <<'EOF'\ntext\nEOF
         local cmd = string.format(
-            '%s --model %s --print %q <<\'MIGAKU_EOF\'\n%s\nMIGAKU_EOF',
+            '%s --model %s --print %q <<\'LAPIDAR_EOF\'\n%s\nLAPIDAR_EOF',
             M.config.claude_path,
             M.config.claude_model,
             prompt,
@@ -139,10 +139,25 @@ local function buildCommand(text)
     end
 end
 
+-- Build PATH including common installation locations
+local function buildPath()
+    local home = os.getenv("HOME") or ""
+    local paths = {
+        home .. "/.npm-global/bin",
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        home .. "/.local/bin",
+        home .. "/bin",
+    }
+    return table.concat(paths, ":")
+end
+
 -- Call LLM to improve text
 local function improveWithLLM(text, callback)
     local cmd = buildCommand(text)
-    
+
     local task = hs.task.new("/bin/bash", function(exitCode, stdOut, stdErr)
         if exitCode == 0 and stdOut and #stdOut > 0 then
             local improved = stdOut:gsub("^%s+", ""):gsub("%s+$", "")
@@ -151,14 +166,14 @@ local function improveWithLLM(text, callback)
             callback(false, stdErr or "Unknown error")
         end
     end, {"-c", cmd})
-    
+
     task:setEnvironment({
-        PATH = "/Users/dami/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+        PATH = buildPath(),
         HOME = os.getenv("HOME"),
     })
-    
+
     task:start()
-    
+
     hs.timer.doAfter(M.config.timeout, function()
         if task:isRunning() then
             task:terminate()
@@ -170,25 +185,25 @@ end
 -- Main handler function
 local function improveWritingHandler()
     local text = getSelectedText()
-    
+
     if not text or #text == 0 then
-        notify("Migaku", "No text selected", false)
+        notify("Lapidar", "No text selected", false)
         playSound(false)
         return
     end
-    
+
     originalText = text
     showProcessing()
-    
+
     improveWithLLM(text, function(success, result)
         hideProcessing()
-        
+
         if success then
             replaceSelectedText(result)
-            notify("Migaku", "Polished ✨", true)
+            notify("Lapidar", "Polished ✨", true)
             playSound(true)
         else
-            notify("Migaku", result, false)
+            notify("Lapidar", result, false)
             playSound(false)
         end
     end)
@@ -200,7 +215,7 @@ function M.start()
         improveWritingHandler()
     end)
     local provider = M.config.provider == "gemini" and "Gemini" or "Claude"
-    print(string.format("Migaku loaded (%s): Press Ctrl+Alt+Cmd+I to polish your writing", provider))
+    print(string.format("Lapidar loaded (%s): Press Ctrl+Alt+Cmd+I to polish your writing", provider))
 end
 
 -- Allow configuration override

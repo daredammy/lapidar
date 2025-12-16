@@ -1,8 +1,8 @@
-# Migaku ✨ 磨く
+# Lapidar
 
-> *"To polish, refine"* — like polishing a gem
+> *From "lapidary"* — the art of cutting and polishing gems
 
-A global macOS "Improve Writing" hotkey powered by LLMs. Select text anywhere, press `⌃⌥⌘I`, get polished writing instantly.
+A global macOS "Improve Writing" hotkey powered by LLMs. Select text anywhere, press `Ctrl+Alt+Cmd+I`, get polished writing instantly.
 
 ## Features
 
@@ -43,19 +43,19 @@ npm install -g @anthropic-ai/claude-code
 claude  # Follow authentication prompts
 ```
 
-### 3. Install Migaku
+### 3. Install Lapidar
 
 Clone this repo:
 
 ```bash
-git clone https://github.com/daredammy/migaku.git ~/.hammerspoon/migaku
+git clone https://github.com/daredammy/lapidar.git ~/.hammerspoon/lapidar
 ```
 
 Add to your `~/.hammerspoon/init.lua`:
 
 ```lua
-local migaku = require("migaku.migaku")
-migaku.start()
+local lapidar = require("lapidar.lapidar")
+lapidar.start()
 ```
 
 Reload Hammerspoon config (click menu bar icon → Reload Config).
@@ -63,8 +63,8 @@ Reload Hammerspoon config (click menu bar icon → Reload Config).
 ## Usage
 
 1. Select text in any application
-2. Press `⌃⌥⌘I` (Control + Option + Command + I)
-3. Wait for the ✨ indicator
+2. Press `Ctrl+Alt+Cmd+I`
+3. Wait for the sparkle indicator
 4. Text is replaced with polished version
 
 ## Configuration
@@ -72,23 +72,23 @@ Reload Hammerspoon config (click menu bar icon → Reload Config).
 Customize in your `init.lua`:
 
 ```lua
-local migaku = require("migaku.migaku")
-migaku.setup({
+local lapidar = require("lapidar.lapidar")
+lapidar.setup({
     -- Provider: "gemini" or "claude"
     provider = "gemini",
-    
+
     -- Gemini settings
     gemini_model = "gemini-2.5-flash-lite",
-    gemini_path = "/path/to/gemini",
-    
-    -- Claude settings  
+    gemini_path = "gemini",  -- or full path if not in PATH
+
+    -- Claude settings
     claude_model = "claude-haiku-4-5-20251001",
-    claude_path = "/path/to/claude",
-    
+    claude_path = "claude",  -- or full path if not in PATH
+
     -- Change the hotkey
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
-    
+
     -- Timeout in seconds
     timeout = 30,
 })
@@ -121,9 +121,9 @@ migaku.setup({
 
 ## How It Works
 
-1. Captures selected text via simulated `⌘C`
+1. Captures selected text via simulated `Cmd+C`
 2. Sends text to LLM via CLI
-3. Replaces selection with improved text via simulated `⌘V`
+3. Replaces selection with improved text via simulated `Cmd+V`
 4. Restores original clipboard contents
 
 ## License
@@ -133,7 +133,3 @@ MIT
 ## Credits
 
 Built with [Hammerspoon](https://www.hammerspoon.org/), [Gemini CLI](https://github.com/google-gemini/gemini-cli), and [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli).
-
----
-
-*Migaku (磨く) — Japanese for "to polish, refine"*
