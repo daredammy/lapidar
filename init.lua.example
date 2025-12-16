@@ -1,0 +1,18 @@
+-- Example Hammerspoon init.lua for Lapidar
+-- Copy the relevant parts to your ~/.hammerspoon/init.lua
+
+-- Load Lapidar (global "Improve Writing" hotkey)
+local lapidar = require("lapidar.lapidar")
+
+-- Option 1: Use defaults (Gemini + gemini-2.5-flash-lite)
+lapidar.start()
+
+-- Option 2: Customize settings
+-- lapidar.setup({
+--     provider = "claude",  -- or "gemini"
+--     gemini_model = "gemini-2.5-flash",
+--     claude_model = "claude-haiku-4-5-20251001",
+--     hotkey = {"ctrl", "alt", "cmd"},
+--     key = "i",
+--     timeout = 30,
+-- })
