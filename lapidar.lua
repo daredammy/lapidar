@@ -9,7 +9,7 @@ M.config = {
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
 
-    -- Provider: "gemini" or "claude"
+    -- Provider: "gemini", "claude", or "copilot"
     provider = "gemini",
 
     -- Gemini settings (uses PATH by default)
@@ -19,6 +19,10 @@ M.config = {
     -- Claude settings (uses PATH by default)
     claude_path = "claude",
     claude_model = "claude-haiku-4-5-20251001",
+
+    -- Copilot settings (uses PATH by default)
+    copilot_path = "copilot",
+    copilot_model = "gpt-4.1",
 
     timeout = 30,  -- seconds
 
@@ -124,6 +128,16 @@ local function buildCommand(text)
             M.config.gemini_model
         )
         return cmd
+    elseif M.config.provider == "copilot" then
+        -- Copilot CLI: copilot -p "prompt\n\ntext" --model model --silent
+        local fullPrompt = prompt .. "\n\n" .. text
+        local cmd = string.format(
+            '%s -p %q --model %s --silent',
+            M.config.copilot_path,
+            fullPrompt,
+            M.config.copilot_model
+        )
+        return cmd
     else
         -- Claude CLI: claude --model model --print "prompt" <<'EOF'\ntext\nEOF
         local cmd = string.format(
@@ -212,7 +226,8 @@ function M.start()
     hs.hotkey.bind(M.config.hotkey, M.config.key, function()
         improveWritingHandler()
     end)
-    local provider = M.config.provider == "gemini" and "Gemini" or "Claude"
+    local providerNames = {gemini = "Gemini", claude = "Claude", copilot = "Copilot"}
+    local provider = providerNames[M.config.provider] or M.config.provider
     print(string.format("Lapidar loaded (%s): Press Ctrl+Alt+Cmd+I to polish your writing", provider))
 end
 
