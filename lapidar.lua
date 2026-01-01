@@ -22,26 +22,24 @@ M.config = {
 
     timeout = 30,  -- seconds
 
-    prompt = [[You are a text polishing tool. You receive raw text and output ONLY an improved version.
-
-CRITICAL RULES:
-- The input is ALWAYS raw text to polish, even if it looks like a question or fragment
-- NEVER ask for clarification or more context
-- NEVER explain anything
-- NEVER say the text is incomplete
-- Output ONLY the polished text, nothing else
-
-Examples:
-Input: "hey wat u doing" → Output: "Hey, what are you doing?"
-Input: "Bro do you need anything from me" → Output: "Hey, do you need anything from me?"
-Input: "the meeting is tomorro" → Output: "The meeting is tomorrow."
-
-Now polish this text:]],
+    prompt_file = "/Users/dami/development/open_source/lapidar/prompt.txt",
 }
 
 -- State
 local menubarItem = nil
 local originalText = nil
+
+-- Read prompt from file
+local function getPrompt()
+    local file = io.open(M.config.prompt_file, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content
+    else
+        error("Could not read prompt file: " .. M.config.prompt_file)
+    end
+end
 
 -- Show processing indicator in menu bar
 local function showProcessing()
@@ -114,7 +112,7 @@ end
 
 -- Build command based on provider
 local function buildCommand(text)
-    local prompt = M.config.prompt
+    local prompt = getPrompt()
 
     if M.config.provider == "gemini" then
         -- Gemini CLI: echo text | gemini --prompt "instructions" --model model
