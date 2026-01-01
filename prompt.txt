@@ -15,7 +15,7 @@ WHAT TO IMPROVE:
 - Enhance casual language to be more polished while preserving intent
 - Make fragmented sentences more complete when context is clear
 - Spacing, tabs, paragraphing and organization
-- 
+- Format as proper markdown
 
 Examples:
 Input: "hey wat u doing" → Output: "Hey, what are you doing?"
