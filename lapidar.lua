@@ -10,7 +10,7 @@ M.config = {
     key = "i",
 
     -- Provider: "gemini", "claude", or "copilot"
-    provider = "gemini",
+    provider = "copilot",
 
     -- Gemini settings (uses PATH by default)
     gemini_path = "gemini",
@@ -119,12 +119,12 @@ local function buildCommand(text)
     local prompt = getPrompt()
 
     if M.config.provider == "gemini" then
-        -- Gemini CLI: echo text | gemini --prompt "instructions" --model model
+        -- Gemini CLI: gemini "prompt + text" --model model (positional prompt, no piping)
+        local fullPrompt = prompt .. "\n\n" .. text
         local cmd = string.format(
-            'echo %q | %s --prompt %q --model %s',
-            text,
+            '%s %q --model %s',
             M.config.gemini_path,
-            prompt,
+            fullPrompt,
             M.config.gemini_model
         )
         return cmd
