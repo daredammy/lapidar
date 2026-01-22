@@ -9,6 +9,10 @@ M.config = {
     hotkey = {"ctrl", "alt", "cmd"},
     key = "i",
 
+    -- Chooser hotkey (with presets)
+    chooser_hotkey = {"ctrl", "alt", "cmd"},
+    chooser_key = "j",
+
     -- Provider: "gemini", "claude", or "copilot"
     provider = "copilot",
 
@@ -27,6 +31,16 @@ M.config = {
     timeout = 30,  -- seconds
 
     prompt_file = "/Users/dami/development/open_source/lapidar/prompt.txt",
+
+    -- Presets for chooser (id, text, instruction)
+    presets = {
+        { id = "shorten", text = "✂️  Shorten", instruction = "Make this text more concise while preserving the key message." },
+        { id = "formal", text = "👔  More formal", instruction = "Make this text more formal and professional in tone." },
+        { id = "casual", text = "😊  More casual", instruction = "Make this text more casual and friendly in tone." },
+        { id = "markdown", text = "📝  Format as markdown", instruction = "Format this text using proper markdown syntax." },
+        { id = "bullets", text = "📋  Convert to bullets", instruction = "Convert this text into a bulleted list." },
+        { id = "custom", text = "✏️  Custom instruction...", instruction = nil },
+    },
 }
 
 -- State
@@ -115,8 +129,15 @@ local function replaceSelectedText(newText)
 end
 
 -- Build command based on provider
-local function buildCommand(text)
+-- @param text: the text to process
+-- @param instruction: optional additional instruction to append to prompt
+local function buildCommand(text, instruction)
     local prompt = getPrompt()
+
+    -- Append additional instruction if provided
+    if instruction and #instruction > 0 then
+        prompt = prompt .. "\n\nAdditional instruction: " .. instruction
+    end
 
     if M.config.provider == "gemini" then
         -- Gemini CLI: gemini "prompt + text" --model model (positional prompt, no piping)
@@ -167,8 +188,11 @@ local function buildPath()
 end
 
 -- Call LLM to improve text
-local function improveWithLLM(text, callback)
-    local cmd = buildCommand(text)
+-- @param text: the text to process
+-- @param callback: function(success, result) called when done
+-- @param instruction: optional additional instruction
+local function improveWithLLM(text, callback, instruction)
+    local cmd = buildCommand(text, instruction)
 
     local task = hs.task.new("/bin/bash", function(exitCode, stdOut, stdErr)
         if exitCode == 0 and stdOut and #stdOut > 0 then
@@ -194,16 +218,10 @@ local function improveWithLLM(text, callback)
     end)
 end
 
--- Main handler function
-local function improveWritingHandler()
-    local text = getSelectedText()
-
-    if not text or #text == 0 then
-        notify("Lapidar", "No text selected", false)
-        playSound(false)
-        return
-    end
-
+-- Process text with LLM and handle result (shared logic)
+-- @param text: the text to process
+-- @param instruction: optional additional instruction
+local function processText(text, instruction)
     originalText = text
     showProcessing()
 
@@ -218,17 +236,101 @@ local function improveWritingHandler()
             notify("Lapidar", result, false)
             playSound(false)
         end
-    end)
+    end, instruction)
 end
 
--- Bind hotkey
+-- Main handler function (no additional instruction)
+local function improveWritingHandler()
+    local text = getSelectedText()
+
+    if not text or #text == 0 then
+        notify("Lapidar", "No text selected", false)
+        playSound(false)
+        return
+    end
+
+    processText(text, nil)
+end
+
+-- Show custom instruction prompt and process
+-- @param text: the text to process
+local function showCustomPrompt(text)
+    local button, input = hs.dialog.textPrompt(
+        "Custom Instruction",
+        "How should I modify the text?",
+        "",
+        "OK",
+        "Cancel"
+    )
+
+    if button == "OK" and input and #input > 0 then
+        processText(text, input)
+    end
+end
+
+-- Build chooser choices from presets
+local function buildChooserChoices()
+    local choices = {}
+    for _, preset in ipairs(M.config.presets) do
+        table.insert(choices, {
+            text = preset.text,
+            subText = preset.instruction or "Enter your own instruction",
+            id = preset.id,
+            instruction = preset.instruction,
+        })
+    end
+    return choices
+end
+
+-- Show chooser with presets
+-- @param text: the selected text to process
+local function showChooser(text)
+    local chooser = hs.chooser.new(function(choice)
+        if not choice then return end  -- User cancelled
+
+        if choice.id == "custom" then
+            showCustomPrompt(text)
+        else
+            processText(text, choice.instruction)
+        end
+    end)
+
+    chooser:choices(buildChooserChoices())
+    chooser:placeholderText("Choose how to modify your text...")
+    chooser:searchSubText(true)
+    chooser:show()
+end
+
+-- Chooser handler function
+local function chooserHandler()
+    local text = getSelectedText()
+
+    if not text or #text == 0 then
+        notify("Lapidar", "No text selected", false)
+        playSound(false)
+        return
+    end
+
+    showChooser(text)
+end
+
+-- Bind hotkeys
 function M.start()
+    -- Main hotkey: quick polish
     hs.hotkey.bind(M.config.hotkey, M.config.key, function()
         improveWritingHandler()
     end)
+
+    -- Chooser hotkey: presets + custom
+    hs.hotkey.bind(M.config.chooser_hotkey, M.config.chooser_key, function()
+        chooserHandler()
+    end)
+
     local providerNames = {gemini = "Gemini", claude = "Claude", copilot = "Copilot"}
     local provider = providerNames[M.config.provider] or M.config.provider
-    print(string.format("Lapidar loaded (%s): Press Ctrl+Alt+Cmd+I to polish your writing", provider))
+    print(string.format("Lapidar loaded (%s):", provider))
+    print("  Ctrl+Alt+Cmd+I → Quick polish")
+    print("  Ctrl+Alt+Cmd+J → Chooser with presets")
 end
 
 -- Allow configuration override
