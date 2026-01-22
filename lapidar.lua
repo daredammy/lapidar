@@ -30,7 +30,7 @@ M.config = {
 
     timeout = 30,  -- seconds
 
-    prompt_file = "/Users/dami/development/open_source/lapidar/prompt.txt",
+    prompt_file = hs.configdir .. "/lapidar/prompt.txt",
 
     -- Presets for chooser (id, text, instruction)
     presets = {
