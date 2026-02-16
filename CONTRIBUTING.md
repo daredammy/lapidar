@@ -13,11 +13,18 @@ Thanks for your interest in contributing to Lapidar!
 ## Development Setup
 
 ```bash
-# Clone to Hammerspoon config directory
-git clone https://github.com/YOUR_USERNAME/lapidar.git ~/.hammerspoon/lapidar
+# Clone to wherever you keep projects
+git clone https://github.com/YOUR_USERNAME/lapidar.git ~/development/lapidar
 
-# Add to your ~/.hammerspoon/init.lua
-require("lapidar").setup()
+# Symlink into Hammerspoon config
+ln -s ~/development/lapidar ~/.hammerspoon/lapidar
+```
+
+Then add to your `~/.hammerspoon/init.lua` (see [init.lua.example](init.lua.example)):
+
+```lua
+local lapidar = require("lapidar.lapidar")
+lapidar.start()
 ```
 
 ## Code Style

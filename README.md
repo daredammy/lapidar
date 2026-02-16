@@ -45,10 +45,17 @@ claude  # Follow authentication prompts
 
 ### 3. Install Lapidar
 
-Clone this repo:
+Clone this repo into your Hammerspoon config:
 
 ```bash
 git clone https://github.com/daredammy/lapidar.git ~/.hammerspoon/lapidar
+```
+
+Or if you prefer to keep it elsewhere, symlink it:
+
+```bash
+git clone https://github.com/daredammy/lapidar.git ~/path/to/lapidar
+ln -s ~/path/to/lapidar ~/.hammerspoon/lapidar
 ```
 
 Add to your `~/.hammerspoon/init.lua` (see [init.lua.example](init.lua.example) for reference):
