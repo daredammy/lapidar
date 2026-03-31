@@ -14,7 +14,7 @@ M.config = {
     chooser_key = "j",
 
     -- Provider: "gemini", "claude", or "copilot"
-    provider = "copilot",
+    provider = "claude",
 
     -- Gemini settings (uses PATH by default)
     gemini_path = "gemini",
@@ -160,10 +160,13 @@ local function buildCommand(text, instruction)
         )
         return cmd
     else
-        -- Claude CLI: claude --model model --print "prompt" <<'EOF'\ntext\nEOF
+        -- Claude CLI: --bare skips hooks/MCP/CLAUDE.md for faster startup;
+        -- apiKeyHelper retrieves the OAuth-managed key from macOS keychain
+        local settings = '{"apiKeyHelper":"security find-generic-password -s \'Claude Code\' -w"}'
         local cmd = string.format(
-            '%s --model %s --print %q <<\'LAPIDAR_EOF\'\n%s\nLAPIDAR_EOF',
+            '%s --bare --settings %q --model %s --print %q <<\'LAPIDAR_EOF\'\n%s\nLAPIDAR_EOF',
             M.config.claude_path,
+            settings,
             M.config.claude_model,
             prompt,
             text
@@ -206,6 +209,7 @@ local function improveWithLLM(text, callback, instruction)
     task:setEnvironment({
         PATH = buildPath(),
         HOME = os.getenv("HOME"),
+        USER = os.getenv("USER"),
     })
 
     task:start()
