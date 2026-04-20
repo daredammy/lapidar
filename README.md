@@ -7,7 +7,7 @@ A global macOS "Improve Writing" hotkey powered by LLMs. Select text anywhere, p
 ## Features
 
 - **Global hotkeys** — Works in any application (Notion, Slack, browser, anywhere)
-- **Multi-provider** — Supports Copilot, Gemini, and Claude
+- **Multi-provider** — Supports Ollama (local), Copilot, Gemini, and Claude
 - **Chooser mode** — Pick from presets (shorten, formalize, casualize, markdown, bullets) or enter a custom instruction
 - **Fast** — Uses lightweight models for quick responses (~2-3 seconds)
 - **Visual feedback** — Menu bar `✨` indicator while processing
@@ -25,7 +25,8 @@ A global macOS "Improve Writing" hotkey powered by LLMs. Select text anywhere, p
 
 - macOS
 - [Hammerspoon](https://www.hammerspoon.org/)
-- One of: [Copilot CLI](https://github.com/github/gh-copilot), [Gemini CLI](https://github.com/google-gemini/gemini-cli), or [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)
+- One of: [Ollama](https://ollama.com/) (local, default), [Copilot CLI](https://github.com/github/gh-copilot), [Gemini CLI](https://github.com/google-gemini/gemini-cli), or [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)
+- `jq` (for the Ollama provider): `brew install jq`
 
 ## Installation
 
@@ -39,7 +40,23 @@ Launch Hammerspoon and grant Accessibility permissions when prompted (System Set
 
 ### 2. Install your preferred LLM CLI
 
-**Copilot (default):**
+**Ollama (default, local — no network, no API keys):**
+```bash
+brew install ollama
+brew services start ollama          # auto-starts on login via launchd
+ollama pull gemma4:e4b              # ~9.6GB, 128K context
+```
+
+The launchd plist (`~/Library/LaunchAgents/homebrew.mxcl.ollama.plist`) has `RunAtLoad=true` and `KeepAlive=true`, so the server survives reboots. Lapidar passes `keep_alive=24h` on every request to keep the model pinned in VRAM between polishes.
+
+Optional perf tweaks (edit the plist under `EnvironmentVariables` and `brew services restart ollama`):
+
+```xml
+<key>OLLAMA_FLASH_ATTENTION</key><string>1</string>
+<key>OLLAMA_KV_CACHE_TYPE</key><string>q8_0</string>
+```
+
+**Copilot:**
 ```bash
 gh extension install github/gh-copilot
 # Then alias: alias copilot="gh copilot"
@@ -115,8 +132,12 @@ Customize in your `~/.hammerspoon/init.lua` by calling `setup()` instead of `sta
 ```lua
 local lapidar = require("lapidar.lapidar")
 lapidar.setup({
-    -- Provider: "copilot", "gemini", or "claude"
-    provider = "copilot",
+    -- Provider: "ollama", "copilot", "gemini", or "claude"
+    provider = "ollama",
+
+    -- Ollama settings (local)
+    ollama_url = "http://localhost:11434/api/generate",
+    ollama_model = "gemma4:e4b",
 
     -- Copilot settings
     copilot_model = "gpt-4.1",
@@ -144,6 +165,12 @@ lapidar.setup({
 ```
 
 ### Available Models
+
+**Ollama (local):**
+- `gemma4:e4b` (default, 9.6GB, 128K context — fast on Apple Silicon)
+- `gemma4:e2b` (7.2GB, lighter)
+- `gemma4:26b` (18GB, higher quality — needs ≥32GB RAM)
+- Any other model from [ollama.com/library](https://ollama.com/library)
 
 **Copilot:**
 - `gpt-4.1` (default)
@@ -219,4 +246,4 @@ MIT
 
 ## Credits
 
-Built with [Hammerspoon](https://www.hammerspoon.org/), [Gemini CLI](https://github.com/google-gemini/gemini-cli), and [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli).
+Built with [Hammerspoon](https://www.hammerspoon.org/), [Ollama](https://ollama.com/), [Gemini CLI](https://github.com/google-gemini/gemini-cli), and [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli).

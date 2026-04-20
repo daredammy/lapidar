@@ -4,14 +4,15 @@
 -- Load Lapidar (global "Improve Writing" hotkey)
 local lapidar = require("lapidar.lapidar")
 
--- Option 1: Use defaults (Gemini + gemini-2.5-flash-lite)
+-- Option 1: Use defaults (Ollama + gemma4:e4b, local)
 lapidar.start()
 
 -- Option 2: Customize settings
 -- lapidar.setup({
---     provider = "claude",  -- or "gemini"
---     gemini_model = "gemini-2.5-flash",
+--     provider = "ollama",  -- "ollama", "claude", "gemini", or "copilot"
+--     ollama_model = "gemma4:e4b",
 --     claude_model = "claude-haiku-4-5-20251001",
+--     gemini_model = "gemini-2.5-flash",
 --     hotkey = {"ctrl", "alt", "cmd"},
 --     key = "i",
 --     timeout = 30,

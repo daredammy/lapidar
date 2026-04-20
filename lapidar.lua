@@ -13,8 +13,12 @@ M.config = {
     chooser_hotkey = {"ctrl", "alt", "cmd"},
     chooser_key = "j",
 
-    -- Provider: "gemini", "claude", or "copilot"
-    provider = "claude",
+    -- Provider: "ollama", "gemini", "claude", or "copilot"
+    provider = "ollama",
+
+    -- Ollama settings (local, via REST API at localhost:11434)
+    ollama_url = "http://localhost:11434/api/generate",
+    ollama_model = "gemma4:e4b",
 
     -- Gemini settings (uses PATH by default)
     gemini_path = "gemini",
@@ -139,7 +143,21 @@ local function buildCommand(text, instruction)
         prompt = prompt .. "\n\nAdditional instruction: " .. instruction
     end
 
-    if M.config.provider == "gemini" then
+    if M.config.provider == "ollama" then
+        -- Ollama REST API. jq -Rs slurps stdin as a single string so the
+        -- heredoc body becomes the JSON prompt value — no manual escaping.
+        -- keep_alive=24h pins the model in VRAM between polishes.
+        local fullPrompt = prompt .. "\n\n" .. text
+        local cmd = string.format(
+            [[jq -Rs --arg model %q '{model:$model,prompt:.,stream:false,keep_alive:"24h"}' <<'LAPIDAR_EOF' | curl -sS %q -d @- | jq -er '.response // error("Ollama error: " + (.error // "unknown"))'
+%s
+LAPIDAR_EOF]],
+            M.config.ollama_model,
+            M.config.ollama_url,
+            fullPrompt
+        )
+        return cmd
+    elseif M.config.provider == "gemini" then
         -- Gemini CLI: gemini "prompt + text" --model model (positional prompt, no piping)
         local fullPrompt = prompt .. "\n\n" .. text
         local cmd = string.format(
@@ -330,7 +348,7 @@ function M.start()
         chooserHandler()
     end)
 
-    local providerNames = {gemini = "Gemini", claude = "Claude", copilot = "Copilot"}
+    local providerNames = {ollama = "Ollama", gemini = "Gemini", claude = "Claude", copilot = "Copilot"}
     local provider = providerNames[M.config.provider] or M.config.provider
     print(string.format("Lapidar loaded (%s):", provider))
     print("  Ctrl+Alt+Cmd+I → Quick polish")
